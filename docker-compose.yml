@@ -1,0 +1,77 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: urbana-postgres
+    environment:
+      POSTGRES_DB: urbana_db
+      POSTGRES_USER: urbana_user
+      POSTGRES_PASSWORD: urbana_pass
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - urbana-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urbana_user -d urbana_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: urbana-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urbana_db
+      SPRING_DATASOURCE_USERNAME: urbana_user
+      SPRING_DATASOURCE_PASSWORD: urbana_pass
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      CORS_ALLOWED_ORIGINS: http://localhost:4200,http://localhost:80
+    ports:
+      - "8080:8080"
+    networks:
+      - urbana-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: urbana-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "4200:80"
+    networks:
+      - urbana-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  urbana-network:
+    driver: bridge
