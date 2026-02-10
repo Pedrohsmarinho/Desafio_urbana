@@ -1,0 +1,22 @@
+# Build artifacts
+target/
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Test files
+src/test/
+
+# Git
+.git/
+.gitignore
