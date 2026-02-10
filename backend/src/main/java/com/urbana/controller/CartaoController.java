@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @Tag(name = "Cartões", description = "Endpoints para gerenciamento de cartões de ônibus")
-@SecurityRequirement(name = "bearerAuth
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cartoes")
 public class CartaoController {
